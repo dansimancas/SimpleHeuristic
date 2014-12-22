@@ -25,16 +25,8 @@ public class LotSizingRule {
     public double[] getEOQs(){
         return eoqs;
     }
-    public int[][] L4L(int[][] requirement){
-        int[][] ProductionPlan = requirement;
-        return ProductionPlan;
-    }
     public double[][] L4L(double[][] requirement){
         double[][] ProductionPlan = requirement;
-        return ProductionPlan;
-    }
-    public int[] L4L(int[] requirement){
-        int[] ProductionPlan = requirement;
         return ProductionPlan;
     }
     public double[] L4L(double[] requirement){
@@ -214,10 +206,10 @@ public class LotSizingRule {
             List<Integer> thisproduct = new ArrayList();
             for(int k=0;k<output[0].length;k++){
                 if(output[i][k]>0) {
-                    thisproduct.add(k);
+                    thisproduct.add(k); //lista de strokes que generan este producto k
                 }
             }
-            strokes.add(thisproduct);
+            strokes.add(thisproduct); //lista de listas.
         }
         double[] additionSC= new double[products];
         double[] additionOC= new double[products];
@@ -246,11 +238,11 @@ public class LotSizingRule {
         List<Integer> thisproduct = new ArrayList();
         for(int i=0;i<output[0].length;i++){
             if(output[productKey-1][i]>0) {
-                thisproduct.add(i);
+                thisproduct.add(i); //crear una lista de strokes que generan este producto
             }
         }
         double additionSC = 0, additionOC = 0, setup = 0, operation = 0;
-        for(int n=0; n<thisproduct.size();n++){
+        for(int n=0; n<thisproduct.size();n++){ //acumular los costos de setup y operación para sacar promedio
             additionSC += sc[thisproduct.get(n)];
              additionOC += oc[thisproduct.get(n)];
         }
@@ -261,5 +253,75 @@ public class LotSizingRule {
         plan = ww.getPlan();
         return plan;
     }
-    
+    public double[] SilverMeal(int productKey, double[] requirement, double hc, double[][] output, double[] sc){
+        double[] plan;
+        List<Integer> thisproduct = new ArrayList();
+        for(int i=0;i<output[0].length;i++){
+            if(output[productKey-1][i]>0) {
+                thisproduct.add(i); //crear una lista de strokes que generan este producto
+            }
+        }
+        double additionSC = 0,setup;
+        for(int n=0; n<thisproduct.size();n++){ //acumular los costos de setup para sacar promedio
+            additionSC += sc[thisproduct.get(n)];
+        }
+        setup = additionSC/thisproduct.size();
+        
+        SilverMeal sm = new SilverMeal(requirement,hc,setup);
+        plan = sm.getOrden();
+        return plan;
+    }
+    public double[][] applyToMany(double[][] requirement, double[] hc, double[][] output, double[] sc, double[] oc, int rule){
+        int products = requirement.length;
+        double[][] plan = new double[products][requirement[0].length];
+        
+        switch(rule){
+            case 4:
+                for(int j=0;j<products;j++){
+                    plan[j] = applyToSingle(j+1,requirement[j],hc[j],output,sc,oc,4);
+                }
+                break;
+            case 5:
+                for(int j=0;j<products;j++){
+                    plan[j] = applyToSingle(j+1,requirement[j],hc[j],output,sc,oc,5);
+                }
+                break;
+            default:
+                plan = L4L(requirement);
+                break;
+        }
+            
+        return plan;
+    }
+    public double[] applyToSingle(int productKey, double[] requirement, double hc, double[][] output, double[] sc, double[] oc, int rule){
+        double[] plan;
+        List<Integer> thisproduct = new ArrayList();
+        for(int i=0;i<output[0].length;i++){
+            if(output[productKey-1][i]>0) {
+                thisproduct.add(i); //crear una lista de strokes que generan este producto
+            }
+        }
+        double additionSC = 0,additionOC=0,setup,operation;
+        for(int n=0; n<thisproduct.size();n++){ //acumular los costos de setup para sacar promedio
+            additionSC += sc[thisproduct.get(n)];
+            additionOC += oc[thisproduct.get(n)];
+        }
+        setup = additionSC/thisproduct.size();
+        operation = additionOC/thisproduct.size();
+        
+        switch(rule){
+            case 4:
+                WagnerWhitin ww = new WagnerWhitin(requirement,hc,setup,operation);
+                plan = ww.getPlan();
+                break;
+            case 5:
+                SilverMeal sm = new SilverMeal(requirement,hc,setup);
+                plan = sm.getOrden();
+            default:
+                plan = L4L(requirement);
+                break;
+        }
+                
+        return plan;
+    }
 }

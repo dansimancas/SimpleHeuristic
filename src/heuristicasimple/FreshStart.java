@@ -150,6 +150,9 @@ public class FreshStart {
             case 4: 
                 Plan = lot_size_Rule.WagnerWhitin(productKey,req,HOLDING_COSTS[productKey-1],OUTPUT, ACCUMULATED_SC, ACCUMULATED_OC);
                 break;
+            case 5: 
+                Plan = lot_size_Rule.SilverMeal(productKey,req,HOLDING_COSTS[productKey-1],OUTPUT, ACCUMULATED_SC);
+                break;
             default: Plan = lot_size_Rule.L4L(req);
                 System.out.println("Invalid selection. Chosing L4L.");
                 break;
